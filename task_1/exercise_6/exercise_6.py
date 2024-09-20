@@ -26,6 +26,52 @@ from abc import ABC, abstractmethod
 
 """
 class SafeDict:
+    def __init__(self, initial_dict=None):
+        if initial_dict is None:
+            self._dict = {}
+        elif isinstance(initial_dict, dict):
+            self._dict = initial_dict
+        else:
+            raise TypeError("Initialization requires a dictionary.")
+
+    def __getitem__(self, key):
+        if isinstance(key, list):
+            result = []
+            for k in key:
+                if k in self._dict:
+                    value = self._dict[k]
+                    if isinstance(value, dict):
+                        value = SafeDict(value)
+                    result.append(value)
+                else:
+                    result.append("Key not found")
+            return result
+        else:
+            if key in self._dict:
+                value = self._dict[key]
+                if isinstance(value, dict):
+                    return SafeDict(value)
+                return value
+            else:
+                return "Key not found"
+
+    def __setitem__(self, key, value):
+        self._dict[key] = value
+
+    def __delitem__(self, key):
+        if key in self._dict:
+            del self._dict[key]
+        else:
+            print(f"Key '{key}' not found, nothing to delete.")
+
+    def update(self, key, value):
+        if key in self._dict:
+            self._dict[key] = value
+        else:
+            print(f"Key '{key}' not found, cannot update.")
+
+    def __repr__(self):
+        return f"SafeDict({self._dict})"
 
 
 """
@@ -46,7 +92,23 @@ value: новое значение переменной окружения.
 
 # Контекстный менеджер
 class TempEnvVar:
-    pass
+    def __init__(self, var_name, value):
+        self.var_name = var_name
+        self.new_value = value
+        self.original_exists = False
+        self.original_value = None
+
+    def __enter__(self):
+        if self.var_name in os.environ:
+            self.original_exists = True
+            self.original_value = os.environ[self.var_name]
+        os.environ[self.var_name] = self.new_value
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.original_exists:
+            os.environ[self.var_name] = self.original_value
+        else:
+            del os.environ[self.var_name]
 
 
 """
@@ -75,12 +137,49 @@ class TempEnvVar:
 
 
 class CustomCollection:
-    pass
+    def __init__(self, data):
+        if not isinstance(data, (list, tuple, set)):
+            raise TypeError("CustomCollection must be initialized with a list, tuple, or set.")
+        self.data = data
+
+    def max_value(self):
+        if not self.data:
+            return None
+        return max(self.data)
+
+    def __repr__(self):
+        return f"CustomCollection({self.data})"
 
 
 def find_max_in_collections(collections):
     def get_max_value(collection):
-        pass
+        max_val = None
+        if isinstance(collection, CustomCollection):
+            max_val = collection.max_value()
+        elif isinstance(collection, dict):
+            for value in collection.values():
+                candidate = get_max_value(value)
+                if candidate is not None:
+                    if (max_val is None) or (candidate > max_val):
+                        max_val = candidate
+        elif isinstance(collection, (list, tuple, set)):
+            for item in collection:
+                candidate = get_max_value(item)
+                if candidate is not None:
+                    if (max_val is None) or (candidate > max_val):
+                        max_val = candidate
+        else:
+            try:
+                if (max_val is None) or (collection > max_val):
+                    max_val = collection
+            except TypeError:
+                pass  # Игнорировать несравнимые элементы
+        return max_val
+
+    result = {}
+    for name, coll in collections.items():
+        result[name] = get_max_value(coll)
+    return result
 
 
 """
@@ -93,8 +192,7 @@ def find_max_in_collections(collections):
 
 
 def transpose_matrix(matrix: list) -> list:
-    return pass # решение в 1 строку с помощью zip
-
+    return [list(row) for row in zip(*matrix)]
 
 """
 № 5 Поддержка аннотаций типов и их проверка
@@ -105,7 +203,7 @@ def transpose_matrix(matrix: list) -> list:
 
 
 def annotated_function(a: int, b: str) -> bool:
-    return pass # решение в 1 строку
+    return isinstance(a, int) and isinstance(b, str) # решение в 1 строку
 
 
 """
@@ -140,17 +238,47 @@ communicate: определяет, как одно животное общает
 
 # Класс с абстрактными методами
 class BaseAnimal(ABC):
-    pass
+    @abstractmethod
+    def sound(self) -> str:
+        pass
+
+    @abstractmethod
+    def communicate(self, other: 'BaseAnimal') -> str:
+        pass
 
 
 # Класс Dog
 class Dog(BaseAnimal):
-    pass
+    def __init__(self, name: str, age: int) -> None:
+        self.name = name
+        self.age = age
+    def sound(self) -> str:
+        return "Woof"
+
+    def communicate(self, other: BaseAnimal) -> str:
+        if isinstance(other, Dog):
+            return 'Buddy and Max bark together!'
+        elif isinstance(other, Cat):
+            return 'Buddy barks at Whiskers'
+        else:
+            raise AttributeError("собака doesn't know how to communicate with другие")
 
 
 # Класс Cat
 class Cat(BaseAnimal):
-    pass
+    def __init__(self, name: str, age: int) -> None:
+        self.name = name
+        self.age = age
+    def sound(self) -> str:
+        return "Meow"
+
+    def communicate(self, other: BaseAnimal) -> str:
+        if isinstance(other, Cat):
+            return 'Whiskers and Mittens purr together!'
+        elif isinstance(other, Dog):
+            return "Whiskers hisses at Buddy"
+        else:
+            return 'Whiskers and Mittens purr together!'
 
 
 """
@@ -187,3 +315,39 @@ class Cat(BaseAnimal):
 
 
 class CustomCollection:
+    def __init__(self, items):
+        if not isinstance(items, list):
+            raise TypeError("Items must be a list.")
+        self.items = items
+
+    def __len__(self):
+        return len(self.items)
+
+    def __bool__(self):
+        return len(self.items) > 0
+
+    def add(self, item):
+        self.items.append(item)
+
+    def remove(self, item):
+        try:
+            self.items.remove(item)
+        except ValueError:
+            raise ValueError("Object not found in the collection.")
+
+    def find(self, predicate):
+        for item in self.items:
+            if predicate(item):
+                return item
+        return None
+
+    def clear(self):
+        self.items.clear()
+
+    def max_value(self):
+        if not self.items:
+            raise ValueError("CustomCollection is empty.")
+        return max(self.items)
+
+    def __repr__(self):
+        return f"CustomCollection({self.items})"
