@@ -33,7 +33,29 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
 
 class ExecutionTimer:
-    pass
+    def __init__(self, use_cpu_time=False):
+        self.use_cpu_time = use_cpu_time
+        self.execution_time = 0
+        self.execution_times = []
+
+    def __enter__(self):
+        self.start_time = time.process_time() if self.use_cpu_time else time.time()
+        logging.info("Execution started.")
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        if exc_type is not None:
+            logging.error("An exception occurred: {}".format(exc_value))
+        else:
+            end_time = time.process_time() if self.use_cpu_time else time.time()
+            execution_time = end_time - self.start_time
+            
+            self.execution_time = execution_time
+            self.execution_times.append(execution_time)
+            logging.info("Execution finished in {} seconds.".format(execution_time))
+
+    def average_execution_time(self):
+        return sum(self.execution_times) / len(self.execution_times) if self.execution_times else 0
 
 
 """
@@ -54,11 +76,26 @@ class ExecutionTimer:
 
 def deep_intersection(set1: Set, set2: Set) -> Set:
     result = set()
-    pass
+    for item in set1:
+        if item in set2:
+            result.add(item)
+        elif isinstance(item, (set, list, tuple)):
+            result.update(deep_intersection(set1, item))
+    return result
 
 
 def find_common_elements_recursive(*sets: List[Set]) -> Set:
-    pass
+    if not all(isinstance(s, set) for s in sets):
+        raise ValueError("Все аргументы должны быть множествами.")
+
+    if not sets:
+        return set()
+
+    result = sets[0]
+    for s in sets[1:]:
+        result = deep_intersection(result, s)
+
+    return result
 
 
 """
@@ -74,7 +111,11 @@ def find_common_elements_recursive(*sets: List[Set]) -> Set:
 
 
 def lists_to_dict(keys: List[Any], values: List[Any]) -> Dict[Any, Any]:
-    pass
+    if len(keys) > len(values):
+        values.extend([None] * (len(keys) - len(values)))
+    elif len(keys) < len(values):
+        values = values[:len(keys)]
+    return dict(zip(keys, values))
 
 
 """
@@ -98,7 +139,18 @@ def combine_strings(
     transform_func: Optional[Callable[[str], str]] = None,
     delimiter: str = "",
 ) -> str:
-    pass
+    if not all(isinstance(s, str) for s in strings):
+        raise ValueError("All elements in the list must be strings.")
+    
+    if transform_func is not None and not callable(transform_func):
+        raise ValueError("Transform function must be callable.")
+    
+    if transform_func:
+        strings = list(map(transform_func, strings))
+    
+    result = delimiter.join(strings)
+    return result
+    
 
 
 """
@@ -137,15 +189,54 @@ resolution (строка) – разрешение видео.
 
 
 class Media:
-    pass
+    def __init__(self, title, duration, _is_playing = False):
+        self.title = title
+        self.duration = duration
+        self._is_playing = _is_playing
+    
+    def play(self):
+        if self._is_playing:
+            return f'{self.title} is already playing'
+        else:
+            self._is_playing = True
+            return f'Playing {self.title}'
+
+    def pause(self):
+        if self._is_playing:
+            self._is_playing = False
+            return f'Paused {self.title}'
+        else:
+            return f'{self.title} is not playing'
+        
+
+    def get_info(self):
+        return f'Title: {self.title}, Duration: {self.duration}'
 
 
 class Music(Media):
-    pass
+    def __init__(self, title, duration, genre, _is_playing=False):
+        super().__init__(title, duration, _is_playing)
+        self.genre = genre
+
+    def play(self):
+        if self._is_playing:
+            return f'{self.title} (Music) is already playing'
+        else:
+            self._is_playing = True
+            return f'Playing music: {self.title} in genre {self.genre}'
 
 
 class Video(Media):
-    pass
+    def __init__(self, title, duration, resolution, _is_playing=False):
+        super().__init__(title, duration, _is_playing)
+        self.resolution = resolution
+
+    def play(self):
+        if self._is_playing:
+            return f'{self.title} (Video) is already playing'
+        else:
+            self._is_playing = True
+            return f'Playing video: {self.title} at resolution {self.resolution}'
 
 
 """
@@ -184,9 +275,40 @@ class Video(Media):
 
 class StackError(Exception):
     """Custom exception for stack errors."""
+    def __init__(self, *args):
+        if args:
+            self.message = args[0]
+        else:
+            self.message = None
 
-    pass
-
-
+            
 class CustomStack:
-    pass
+    def __init__(self):
+        self.__stack = list()
+
+    def push(self, item):
+        self.__stack.append(item)
+    
+    def pop(self):
+        if not self.__stack:
+            raise StackError("Pop from an empty stack")
+        else:
+            return self.__stack.pop()
+    
+    def peek(self):
+        if not self.__stack:
+            raise StackError("Peek from an empty stack")
+        return self.__stack[-1]
+    
+    def is_empty(self):
+        if not self.__stack:
+            return True
+        else:
+            return False
+    
+    def __str__(self):
+        return str(self.__stack)
+    
+    def __iter__(self):
+        return iter(self.__stack)
+    
