@@ -238,6 +238,14 @@ communicate: определяет, как одно животное общает
 
 # Класс с абстрактными методами
 class BaseAnimal(ABC):
+    name: str
+    age: int
+
+    @abstractmethod
+    def __init__(self, name: str, age: int) -> None:
+        self.name = name
+        self.age = age
+
     @abstractmethod
     def sound(self) -> str:
         pass
