@@ -28,26 +28,113 @@ from abc import ABC, abstractmethod
 Игрушка должна иметь имя и булево значение, указывающее, является ли она интересной (fun).
 """
 class Animal(ABC):
-    pass
+    _name = str
+    _mood = str
+    _hunger = int
+    _tiredness = int
+
+    def __init__(self, name, mood, hunger, tiredness):
+        self.name = name
+        self.mood = mood
+        self.hunger = hunger
+        self.tiredness = tiredness
+
+
+    def __init__(self, name, mood):
+        self.name = name
+        self.mood = mood
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def mood(self):
+        return self._mood
+
+    @property
+    def hunger(self):
+        return self._hunger
+
+    @property
+    def tiredness(self):
+        return self._tiredness
+
+    @name.setter
+    def name(self, value):
+        self._name = value
+
+    @mood.setter
+    def mood(self, value):
+        self._mood = value
+
+    @hunger.setter
+    def hunger(self, value):
+        if value > 10:
+            # А почему тут не может быть 11??? У нас же нет ограничений по голоду
+            raise ValueError
+        self._hunger = value
+
+    @tiredness.setter
+    def tiredness(self, value):
+        self._tiredness = value
+
+    @abstractmethod
+    def speak(self):
+        pass
+
+    def feed(self):
+        self.hunger -= 3
+        print("Feed")
+
+    def rest(self):
+        self.tiredness -= 3
+        print("Rest")
+
+    def play(self, toy):
+        if toy.is_fun:
+            self.mood = "happy"
+        self.tiredness += 2
+        print("Play")
+
+    def stat(self):
+        if self.hunger > 7:
+            return "hungry"
+        if self.mood == "happy":
+            return "happy"
+
+
+
 
 class Dog(Animal):
     def speak(self):
-        pass
+        return f"Woof! I'm {self.stat()}!"
 
 
+dog = Dog(name="Buddy", mood="neutral")
+dog.hunger()
 class Cat(Animal):
     def speak(self):
-        pass
+        return f"Meow! I'm {self.stat()}!"
 
 
 class Parrot(Animal):
     def speak(self):
-        pass
+        # if str.lower(self.name) == "говорун":
+        #     return "Птица Говорун обладает умом и сообразительностью"
+        return "Кря! I'm {self.stat()}!"
 
 
 class Toy:
-    pass
+    name = str
+    interest = bool
 
+    def __init__(self, name, is_fun):
+        self.name = name
+        self.interest = is_fun
+
+    def is_fun(self):
+        return self.interest
 
 """
 № 2 Написать класс с использованием магических методов (__str__, __len__, __getitem__).
@@ -58,8 +145,20 @@ class Toy:
 
 для __getitem__ выводить значение по индексу
 """
+
+
 class MyContainer:
-    pass
+    def __init__(self, items):
+        self.items = items
+
+    def __str__(self):
+        return f"MyContainer with {len(self.items)} items"
+
+    def __len__(self):
+        return len(self.items)
+
+    def __getitem__(self, index):
+        return self.items[index]
 
 
 """
@@ -83,8 +182,22 @@ mode (строка): Режим открытия файла (например, '
 но эти параметры не должны использоваться в реализации метода.
 """
 class FileManager:
-    pass
 
+    filename = str
+    mode = str
+    file = None
+
+    def __init__(self, filename, mode):
+        self.filename = filename
+        self.mode = mode
+
+    def __enter__(self):
+        self.file = open(self.filename, self.mode)
+        return self.file
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.file:
+            self.file.close()
 
 """
 № 4 Напишите функцию, которая принимает два аргумента:
@@ -112,12 +225,53 @@ tpl: Вложенный кортеж (кортеж, содержащий дру�
 Время, затраченное на попытку изменения кортежа.
 """
 
-
 def list_tuple_operations_deep(lst, tpl):
+    answer = ["", "", "", ""]
     start_list = time.time()
+    time.sleep(0.0001)
+    answer[0] = modify_list(lst)
+    end_list = time.time()
+    answer[2] = end_list - start_list
 
-    pass
 
+    start_tuple = time.time()
+    time.sleep(0.0001)
+    answer[1] = modify_tuple(tpl)
+    end_tuple = time.time()
+
+
+    answer[3] = end_tuple - start_tuple
+
+    return tuple(answer)
+
+
+def modify_list(lst):
+    for i in range(len(lst)):
+        if type(lst[i]) == list:
+            modify_list(lst[i])
+        else:
+            lst[i] = 'modified'
+
+    return lst
+
+
+def modify_tuple(tpl):
+    try:
+        for i in range(len(tpl)):
+            if type(tpl[i]) == tuple:
+                modify_tuple(tpl[i])
+            else:
+                tpl[i] = 'modified'
+
+        return tpl
+    except Exception as ex:
+        return str(ex)
+
+
+lst = [1, [2, 3], [4, [5, 6]]]
+tpl = (1, (2, 3), (4, (5, 6)))
+
+updated_lst, error_msg, list_time, tuple_time = list_tuple_operations_deep(lst, tpl)
 
 """
 № 5 Напишите функцию, которая принимает большое число n и возвращает квадраты всех чисел от 1 до n как с использованием списка,
@@ -126,14 +280,27 @@ def list_tuple_operations_deep(lst, tpl):
 
 
 def square_numbers(n):
-    return pass # решение в 1 строку
+    return [x**2 for x in range(1, n+1)] # решение в 1 строку
 
 
 def square_numbers_generator(n):
-    pass
+    for i in range(n):
+        yield (i+1)**2
 
 
 def memory_usage_comparison(n):
-    tracemalloc.start()
+    answer = ""
 
-    pass
+    square_numbers(n)
+    current, peak = tracemalloc.get_traced_memory()
+    answer += "current = " + str(current) + ", peak = " + str(peak) + "\n"
+
+    tracemalloc.reset_peak()
+
+    square_numbers_generator(n)
+    current1, peak1 = tracemalloc.get_traced_memory()
+    answer += "current = " + str(current) + ", peak = " + str(peak)
+
+    return (peak, peak1)
+
+# print(memory_usage_comparison(1000000))
