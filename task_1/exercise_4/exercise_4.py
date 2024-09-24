@@ -43,16 +43,13 @@ def modify_elements():
 """
 
 def create_tuples(list1: list, list2: list) -> list:
-    lst = []
     # tupl = zip(list1,list2)
     #очень интересно что после принта tupl пропадает
     # print(list(tupl))
     # print(tupl)
-    for i, (l1,l2) in enumerate(zip(list1,list2)):
-         lst.append((i , l1, l2))
-    return lst
+    return [(i,l1,l2) for i, (l1,l2) in enumerate(zip(list1,list2))]
 
-
+print(create_tuples([1,2,3],["a","b","c"]))
 """
 № 4 Вычисление факториала с помощью обычной функции и генератора
 """
@@ -91,19 +88,10 @@ packages = {
 
 # на вход название модуля/библиотеки/фреймворка
 def classify_package(pkg_name: str) -> str:
-    packages = {
-        "numpy": "library",
-        "pandas": "library",
-        "django": "framework",
-        "flask": "framework",
-        "math": "module",
-        "itertools": "module",
-    }
     try:
         ans = packages[pkg_name]
     except KeyError as e:
         ans = "unknown"
-
     return ans
 
 print(classify_package("numpy"))
