@@ -27,22 +27,14 @@ from abc import ABC, abstractmethod
 Реализуйте класс Toy, который будет представлять игрушку.
 Игрушка должна иметь имя и булево значение, указывающее, является ли она интересной (fun).
 """
+
+
 class Animal(ABC):
-    _name = str
-    _mood = str
-    _hunger = int
-    _tiredness = int
-
-    def __init__(self, name, mood, hunger, tiredness):
-        self.name = name
-        self.mood = mood
-        self.hunger = hunger
-        self.tiredness = tiredness
-
-
-    def __init__(self, name, mood):
-        self.name = name
-        self.mood = mood
+    def __init__(self, name, mood, hunger=10, tiredness=0):
+        self._name = name
+        self._mood = mood
+        self._hunger = hunger
+        self._tiredness = tiredness
 
     @property
     def name(self):
@@ -71,12 +63,13 @@ class Animal(ABC):
     @hunger.setter
     def hunger(self, value):
         if value > 10:
-            # А почему тут не может быть 11??? У нас же нет ограничений по голоду
             raise ValueError
         self._hunger = value
 
     @tiredness.setter
     def tiredness(self, value):
+        if value > 10:
+            raise ValueError
         self._tiredness = value
 
     @abstractmethod
@@ -84,11 +77,17 @@ class Animal(ABC):
         pass
 
     def feed(self):
-        self.hunger -= 3
+        if self.hunger > 3:
+            self.hunger -= 3
+        else:
+            self.hunger = 0
         print("Feed")
 
     def rest(self):
-        self.tiredness -= 3
+        if self.tiredness > 3:
+            self.tiredness -= 3
+        else:
+            self.tiredness = 0
         print("Rest")
 
     def play(self, toy):
@@ -104,15 +103,11 @@ class Animal(ABC):
             return "happy"
 
 
-
-
 class Dog(Animal):
     def speak(self):
         return f"Woof! I'm {self.stat()}!"
 
 
-dog = Dog(name="Buddy", mood="neutral")
-dog.hunger()
 class Cat(Animal):
     def speak(self):
         return f"Meow! I'm {self.stat()}!"
@@ -126,15 +121,13 @@ class Parrot(Animal):
 
 
 class Toy:
-    name = str
-    interest = bool
-
     def __init__(self, name, is_fun):
         self.name = name
         self.interest = is_fun
 
     def is_fun(self):
         return self.interest
+
 
 """
 № 2 Написать класс с использованием магических методов (__str__, __len__, __getitem__).
@@ -181,12 +174,9 @@ mode (строка): Режим открытия файла (например, '
 Он должен принимать параметры, соответствующие стандартному интерфейсу метода __exit__,
 но эти параметры не должны использоваться в реализации метода.
 """
+
+
 class FileManager:
-
-    filename = str
-    mode = str
-    file = None
-
     def __init__(self, filename, mode):
         self.filename = filename
         self.mode = mode
@@ -198,6 +188,7 @@ class FileManager:
     def __exit__(self, exc_type, exc_value, traceback):
         if self.file:
             self.file.close()
+
 
 """
 № 4 Напишите функцию, которая принимает два аргумента:
@@ -225,6 +216,7 @@ tpl: Вложенный кортеж (кортеж, содержащий дру�
 Время, затраченное на попытку изменения кортежа.
 """
 
+
 def list_tuple_operations_deep(lst, tpl):
     answer = ["", "", "", ""]
     start_list = time.time()
@@ -233,12 +225,10 @@ def list_tuple_operations_deep(lst, tpl):
     end_list = time.time()
     answer[2] = end_list - start_list
 
-
     start_tuple = time.time()
     time.sleep(0.0001)
     answer[1] = modify_tuple(tpl)
     end_tuple = time.time()
-
 
     answer[3] = end_tuple - start_tuple
 
@@ -268,11 +258,6 @@ def modify_tuple(tpl):
         return str(ex)
 
 
-lst = [1, [2, 3], [4, [5, 6]]]
-tpl = (1, (2, 3), (4, (5, 6)))
-
-updated_lst, error_msg, list_time, tuple_time = list_tuple_operations_deep(lst, tpl)
-
 """
 № 5 Напишите функцию, которая принимает большое число n и возвращает квадраты всех чисел от 1 до n как с использованием списка,
 так и с использованием генератора. Измерьте память с помощью tracemalloc.get_traced_memory(), занимаемую каждым подходом.
@@ -280,12 +265,12 @@ updated_lst, error_msg, list_time, tuple_time = list_tuple_operations_deep(lst, 
 
 
 def square_numbers(n):
-    return [x**2 for x in range(1, n+1)] # решение в 1 строку
+    return [x ** 2 for x in range(1, n + 1)]  # решение в 1 строку
 
 
 def square_numbers_generator(n):
     for i in range(n):
-        yield (i+1)**2
+        yield (i + 1) ** 2
 
 
 def memory_usage_comparison(n):
@@ -302,5 +287,3 @@ def memory_usage_comparison(n):
     answer += "current = " + str(current) + ", peak = " + str(peak)
 
     return (peak, peak1)
-
-# print(memory_usage_comparison(1000000))
