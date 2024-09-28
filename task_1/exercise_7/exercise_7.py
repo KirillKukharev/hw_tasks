@@ -33,7 +33,38 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
 
 class ExecutionTimer:
-    pass
+    execution_times = list[float]
+
+    def __init__(self, use_cpu_time=False):
+        """
+        :param use_cpu_time: если True, измеряется время процессора (CPU), в противном случае измеряется реальное время
+        """
+        self.use_cpu_time = use_cpu_time
+
+    def __enter__(self):
+        """Запуск таймера и регистрация начала выполнения."""
+        self.start_time = time.process_time() if self.use_cpu_time else time.time()
+        logging.info("Execution started.")
+        return self  # Возвращает self, чтобы разрешить извлечение времени выполнения из контекста
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Остановка таймера, запись результата и обработка исключений."""
+        self.end_time = time.process_time() if self.use_cpu_time else time.time()
+        self.elapsed_time = self.end_time - self.start_time
+        self.execution_times.append(self.elapsed_time)
+
+        if exc_type is None:
+            logging.info(f"Execution finished in {self.elapsed_time:.6f} seconds.")
+        else:
+            logging.error(f"An exception occurred: {exc_val}")
+
+    @classmethod
+    def average_execution_time(self):
+        """Возврат среднего времени выполнения всех записанных блоков."""
+        if not self.execution_times:
+            return 0
+        return sum(self.execution_times) / len(self.execution_times)
+
 
 
 """
@@ -52,13 +83,55 @@ class ExecutionTimer:
 """
 
 
+def is_iterable(obj: Any) -> bool:
+    """
+    Проверьте, является ли объект итерабельным.
+    """
+    return isinstance(obj, Iterable) and not isinstance(obj, (str, bytes))
+
+
 def deep_intersection(set1: Set, set2: Set) -> Set:
+    """
+    Рекурсивное нахождение пересечения между двумя наборами.
+    Если элемент в обоих наборах также является итерабельным (вложенное множество, список или кортеж),
+    функция будет рекурсивно искать пересечения внутри этих элементов.
+    """
     result = set()
-    pass
+    
+    for item in set1:
+        if item in set2:
+            if isinstance(item, set):
+                sub_intersection = deep_intersection(item, set2 & {item})
+                if sub_intersection:
+                    result.add(frozenset(sub_intersection))
+            elif is_iterable(item):
+                corresponding_item = next((x for x in set2 if isinstance(x, type(item))), None)
+                if corresponding_item:
+                    common_elements = deep_intersection(set(item), set(corresponding_item))
+                    if common_elements:
+                        result.add(type(item)(common_elements))
+            else:
+                result.add(item)
+    
+    return result
 
 
-def find_common_elements_recursive(*sets: List[Set]) -> Set:
-    pass
+def find_common_elements_recursive(*sets: Set) -> Set:
+    """
+    Нахождение пересечений нескольких наборов, рекурсивно обрабатывая вложенные повторяющиеся значения.
+    Поддерживает произвольное количество наборов и рекурсивно вызывает deep_intersection.
+    """
+    if not sets:
+        return set()
+    
+    common = sets[0]
+    for s in sets[1:]:
+        common = deep_intersection(set(common), set(s))
+        if not common:
+            return set()
+    return common
+
+
 
 
 """
@@ -74,7 +147,16 @@ def find_common_elements_recursive(*sets: List[Set]) -> Set:
 
 
 def lists_to_dict(keys: List[Any], values: List[Any]) -> Dict[Any, Any]:
-    pass
+    """
+    Преобразование двух списков (ключи и значения) в словарь.
+    
+    Если ключей больше, чем значений, дополнительные ключи будут иметь значение None.
+    Если значений больше, чем ключей, дополнительные значения будут проигнорированы.
+    """
+    result = {key: value for key, value in zip(keys, values)}
+    for key in keys[len(values):]:
+        result[key] = None
+    return result
 
 
 """
@@ -98,7 +180,31 @@ def combine_strings(
     transform_func: Optional[Callable[[str], str]] = None,
     delimiter: str = "",
 ) -> str:
-    pass
+    """
+    Объединение списка строк в одну строку с необязательным преобразованием и разделителем.
+    
+    Args:
+        :param strings: Список строк, которые нужно объединить.
+        :param transform_func: Дополнительная функция для преобразования каждой строки перед объединением.
+        :param delimiter: Строка-разделитель для разделения объединенных строк (по умолчанию используется пустая строка).
+    
+    Returns:
+        :return str: Объединенная строка с примененными преобразованиями и разделителем.
+    
+    Raises:
+        :raises ValueError: Если какой-либо элемент в строках не является строкой.
+        :raises ValueError: Если transform_func указан и не может быть вызван.
+    """
+    if not all(isinstance(s, str) for s in strings):
+        raise ValueError("All elements in the list must be strings.")
+    
+    if transform_func is not None and not callable(transform_func):
+        raise ValueError("Transform function must be callable.")
+    
+    if transform_func:
+        strings = [transform_func(s) for s in strings]
+
+    return delimiter.join(strings)
 
 
 """
@@ -137,15 +243,49 @@ resolution (строка) – разрешение видео.
 
 
 class Media:
-    pass
+    def __init__(self, title: str, duration: str):
+        self.title = title
+        self.duration = duration
+        self._is_playing = False
+    
+    def play(self) -> str:
+        if self._is_playing:
+            return f"{self.title} is already playing."
+        self._is_playing = True
+        return f"Playing {self.title}."
+    
+    def pause(self) -> str:
+        if not self._is_playing:
+            return f"{self.title} is not playing."
+        self._is_playing = False
+        return f"Paused {self.title}."
+    
+    def get_info(self) -> str:
+        return f"Title: {self.title}, Duration: {self.duration}"
 
-
+    
 class Music(Media):
-    pass
+    def __init__(self, title: str, duration: str, genre: str):
+        super().__init__(title, duration)
+        self.genre = genre
+    
+    def play(self) -> str:
+        if self._is_playing:
+            return f"{self.title} (Music) is already playing."
+        self._is_playing = True
+        return f"Playing music: {self.title} in genre {self.genre}."
 
 
 class Video(Media):
-    pass
+    def __init__(self, title: str, duration: str, resolution: str):
+        super().__init__(title, duration)
+        self.resolution = resolution
+    
+    def play(self) -> str:
+        if self._is_playing:
+            return f"{self.title} (Video) is already playing."
+        self._is_playing = True
+        return f"Playing video: {self.title} in resolution {self.resolution}."
 
 
 """
@@ -156,37 +296,57 @@ class Video(Media):
 Ваша реализация должна включать следующие методы:
 
 Конструктор __init__:
-
 Создайте пустой стек.
+
 Метод push(item):
-
 Добавляет элемент item на верх стека.
-Метод pop():
 
+Метод pop():
 Удаляет и возвращает элемент с вершины стека.
 Если стек пуст, выбрасывает исключение StackError с сообщением "Pop from an empty stack".
 
 Метод peek():
-
 Возвращает элемент с вершины стека, не удаляя его.
 Если стек пуст, выбрасывает исключение StackError с сообщением "Peek from an empty stack".
+
 Метод is_empty():
-
 Возвращает True, если стек пуст, и False в противном случае.
+
 Метод __str__():
-
 Возвращает строковое представление стека в виде списка.
-Метод __iter__():
 
+Метод __iter__():
 Позволяет итерировать элементы стека в порядке их добавления.
 """
 
 
 class StackError(Exception):
     """Custom exception for stack errors."""
-
     pass
 
 
 class CustomStack:
-    pass
+    def __init__(self):
+        self._stack = []
+
+    def push(self, item):
+        self._stack.append(item)
+
+    def pop(self):
+        if self.is_empty():
+            raise StackError("Pop from an empty stack")
+        return self._stack.pop()
+
+    def peek(self):
+        if self.is_empty():
+            raise StackError("Peek from an empty stack")
+        return self._stack[-1]
+
+    def is_empty(self):
+        return len(self._stack) == 0
+
+    def __str__(self):
+        return str(self._stack)
+
+    def __iter__(self):
+        return iter(self._stack)

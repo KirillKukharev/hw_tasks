@@ -2,6 +2,6 @@
 # isort .
 # black .
 
-mypy exercise_10
+mypy exercise_7
 
-pylint exercise_10
+pylint exercise_7
