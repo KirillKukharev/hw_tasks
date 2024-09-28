@@ -19,3 +19,6 @@ token.json
 .python-version
 .DS_Store
 /storage/
+error_log.py
+ff.txt
+env

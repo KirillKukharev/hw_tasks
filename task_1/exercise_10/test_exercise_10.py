@@ -1,8 +1,6 @@
 import os
 import time
-
 import pytest
-
 from exercise_10 import *
 
 
@@ -95,3 +93,12 @@ def test_write_to_file_with_logging():
 
     with open(os.path.join(os.getcwd(), log_filename), "r") as log_file:
         assert "FileExistsError" in log_file.read()
+
+
+if __name__ == "__main__":
+    test_binary_search()
+    test_cache_and_retry()
+    test_complex_number_comparison()
+    test_create_incrementer()
+    test_search_with_unsorted_list()
+    test_write_to_file_with_logging()
