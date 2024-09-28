@@ -1,2 +1,2 @@
 # hw_tasks
-Repository for homeworks
+Иванов Вячеслав ПИЭ-41
