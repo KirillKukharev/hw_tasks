@@ -11,7 +11,12 @@ import copy
 """
 
 def copy_comparison():
-    pass
+    original = [[1,2,3],[4,5,6]]
+    copy_orig = copy.copy(original)
+    deep_orig = copy.deepcopy(original)
+    original[0][0] = 99
+    return copy_orig, deep_orig
+
 
 """
 № 2 Изменение элементов в списке и попытка изменения элементов в кортеже
@@ -22,46 +27,75 @@ def copy_comparison():
 """
 
 def modify_elements():
-    pass
+    lst = list(range(1,4))
+    tpl = tuple(range(1,4))
+    lst[0] = 99
+    try:
+        tpl[0] = 99
+    except TypeError as ex:
+        return lst, tpl, str(ex)[15:]
+    return 0
+
+
 
 """
 № 3 Создание списка кортежей с помощью zip и enumerate
 """
 
 def create_tuples(list1: list, list2: list) -> list:
-    return pass # решение в одну строку
+    # tupl = zip(list1,list2)
+    #очень интересно что после принта tupl пропадает
+    # print(list(tupl))
+    # print(tupl)
+    return [(i,l1,l2) for i, (l1,l2) in enumerate(zip(list1,list2))]
 
+print(create_tuples([1,2,3],["a","b","c"]))
 """
 № 4 Вычисление факториала с помощью обычной функции и генератора
 """
 
 # Обычная функция
 def factorial(n: int) -> int:
-    pass
-
+    if n <= 0:
+        return 1
+    elif n == 1:
+        return 1
+    else:
+        return n*factorial(n-1)
 
 # Генератор
 def factorial_generator(n: int): # использовать yield
-    pass
-
+    f = 1
+    if n == 1:
+        yield 1
+    else:
+        for i in range(2, n+1):
+            f *= i
+            yield f
 
 """
 № 5 Определение принадлежности пакета через код
 """
 # Заполнить одним из значений library/framework/module/unknown
 packages = {
-    "numpy": "unknown",
-    "pandas": "unknown",
-    "django": "unknown",
-    "flask": "unknown",
-    "math": "unknown",
-    "itertools": "unknown",
+    "numpy": "library",
+    "pandas": "library",
+    "django": "framework",
+    "flask": "framework",
+    "math": "module",
+    "itertools": "module",
 }
 
 # на вход название модуля/библиотеки/фреймворка
 def classify_package(pkg_name: str) -> str:
-    return pass # определение, чем является строковый объект, если не известно, то вернуть сначение `unknown`
+    try:
+        ans = packages[pkg_name]
+    except KeyError as e:
+        ans = "unknown"
+    return ans
 
+print(classify_package("numpy"))
+print(classify_package("adas"))
 
 """
 № 6 Реализация классов с динамическим полиморфизмом и данных скрытием
@@ -78,16 +112,30 @@ class Worker:
 
 
 class Programmer(Worker):
-    pass
+    def do_work(self):
+        return 'Writing code'
 
 
 class Designer(Worker):
-    pass
+    def do_work(self):
+        return 'Designing interface'
 
 
+"""
 # Инкапсуляция: скрытие реализации с использованием методов доступа
 # При инициализации оъекта класса PrivateAccount объявить приватный атрибут balance
 # Реализовать метод get_balance возвращающий приватный атрибут текущего баланса
-# Реализовать метод deposit с возможностью внесения указанной суммы условной единицы
+# Реализовать метод deposit с возможностью внесения у казанной суммы условной единицы
+"""
 class PrivateAccount:
-    pass
+    def __init__(self,balance):
+        self.__balance = balance
+
+    def get_balance(self):
+        return self.__balance
+
+    def deposit(self, dep):
+        if dep > 0:
+            self.__balance += dep
+
+
