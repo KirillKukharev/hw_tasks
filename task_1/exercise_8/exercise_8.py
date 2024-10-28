@@ -22,7 +22,21 @@ __exit__(self, exc_type, exc_value, traceback): Метод, который во�
 
 # Контекстный менеджер
 class MultiTempAttributes:
-    pass
+    def __init__(self, obj, attrs_values):
+        self.obj = obj
+        self.attrs_values = attrs_values
+        self.null_values = {}
+
+    def __enter__(self):
+        for attr, val in self.attrs_values.items():
+            self.null_values[attr] = getattr(self.obj, attr)
+            setattr(self.obj, attr, val)
+        return self.obj
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        for attr, val in self.null_values.items():
+            setattr(self.obj, attr, val)
+
 
 
 """
@@ -39,8 +53,12 @@ class MultiTempAttributes:
 
 
 def count_unique_words(text: str) -> int:
-    pass
-
+    text = text.lower()
+    for char in string.punctuation:
+        text = text.replace(char, '')
+    words = text.split()
+    unique_words = set(words)
+    return len(unique_words)
 
 """
 № 3 Анализ четных чисел
@@ -60,7 +78,15 @@ numbers: Список целых чисел.
 
 
 def analyze_even_numbers(numbers: List[int]) -> Dict[str, Optional[float]]:
-    pass
+    numbers = [num for num in numbers if num % 2 == 0]
+    result = {
+        "count": len(numbers),
+        "sum": sum(numbers) if numbers else None,
+        "average": sum(numbers) / len(numbers) if numbers else None,
+        "max": max(numbers) if numbers else None,
+        "min": min(numbers) if numbers else None,
+    }
+    return result
 
 
 """
@@ -82,7 +108,15 @@ def analyze_even_numbers(numbers: List[int]) -> Dict[str, Optional[float]]:
 def all_unique_elements(data) -> bool:
     def flatten(d):
         """Вспомогательная функция для рекурсивного разворачивания вложенных структур"""
-        pass
+        if isinstance(d, (list, tuple, set)):
+            return [item for sublist in d for item in flatten(sublist) if item is not None]
+        elif isinstance(d, dict):
+            return [item for sublist in d.values() for item in flatten(sublist) if item is not None]
+        return [d]
+
+    flattened_data = flatten(data)
+
+    return len(flattened_data) == len(set(flattened_data))
 
 
 """
@@ -103,12 +137,17 @@ recursive (bool, по умолчанию False): если True, функция �
 """
 
 
-def enumerate_list(
-    data: list, start: int = 0, step: int = 1, recursive: bool = False
-) -> list:
+def enumerate_list(data: list, start: int = 0, step: int = 1, recursive: bool = False) -> list:
     def recursive_enumerate(lst, idx):
-        pass
-
+        result = []
+        for i, item in enumerate(lst):
+            if isinstance(item, list) and recursive:
+                result.append((idx, recursive_enumerate(item, idx)))
+            else:
+                result.append((idx, item))
+            idx += step
+        return result
+    return recursive_enumerate(data, start)
 
 """
 № 6 Реализация контекстного менеджера для подключения к базе данных (симуляция)
@@ -136,4 +175,60 @@ logging.basicConfig(level=logging.INFO)
 
 
 class DatabaseConnection:
-    pass
+    def __init__(self, db_name: str) -> None:
+        self.db_name = db_name
+        self.connection = None
+        self.transaction_active = False
+
+    def __enter__(self):
+        logging.info(f"Connecting to the database {self.db_name}")
+        self.connect()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        logging.info(f"Closing the database {self.db_name} connection")
+        self.close()
+
+    def connect(self):
+        logging.info(f"A connection to the database {self.db_name} has been established")
+        self.connection = f"Connected to {self.db_name} database"
+
+    def execute_query(self, query: str):
+        if self.transaction_active:
+            logging.info(f"Request execution: {query}")
+            return f"Result of '{query}'"
+        else:
+            raise RuntimeError("No active transaction")
+
+    def start_transaction(self):
+
+        if not self.transaction_active:
+            logging.info(f"The beginning of the transaction")
+            self.transaction_active = True
+        else:
+            logging.warning("The transaction is already active")
+
+
+    def commit(self):
+        if self.transaction_active:
+            logging.info("Transaction commit")
+            self.transaction_active = False
+        else:
+            raise RuntimeError("No active transaction to commit")
+
+    def rollback(self):
+
+        if self.transaction_active:
+            logging.info("Rollback a transaction")
+            self.transaction_active = False
+        else:
+            logging.warning("The transaction is not active")
+
+    def close(self):
+
+        if self.connection:
+            logging.info("The connection to the database is closed")
+            self.connection = None
+            self.transaction_active = False
+        else:
+            logging.warning("The connection to the database has already been closed")
